@@ -80,7 +80,8 @@ def default_config() -> dict:
             "dm_long_template": "",
             "email_digest_subject_role": "software",
             "email_greeting": "Your Daily Job Digest",
-            "sender_email": "",
+            # Sender address is not a profile setting — it is fixed to
+            # SENDER_EMAIL in .env so it always matches SENDER_APP_PASSWORD.
             "recipient_email": "",
         },
     }

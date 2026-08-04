@@ -215,12 +215,13 @@ def send_daily_digest(limit: int = None, dry_run: bool = False) -> dict:
 
     profile = get_active_profile()
     out_cfg = profile.get("outreach") or {}
-    # Profile overrides env defaults for both sender and recipient.
-    sender = (out_cfg.get("sender_email") or "").strip() or SENDER_EMAIL
+    # Sender is fixed to .env (SENDER_EMAIL) — it must match SENDER_APP_PASSWORD.
+    # Only the recipient can be overridden per profile.
+    sender = SENDER_EMAIL
     recipient = (out_cfg.get("recipient_email") or "").strip() or RECIPIENT_EMAIL
 
     if not sender or not SENDER_APP_PASSWORD:
-        return {"error": "Sender email or SENDER_APP_PASSWORD not configured"}
+        return {"error": "SENDER_EMAIL or SENDER_APP_PASSWORD not configured in .env"}
     if not recipient:
         return {"error": "Recipient email not configured (set on profile or RECIPIENT_EMAIL in .env)"}
 

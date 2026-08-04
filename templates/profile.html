@@ -178,8 +178,8 @@
                 <div class="field-row">
                     <div class="field">
                         <label>Sender Email (From address)</label>
-                        <div class="help">The Gmail account the digest is sent <em>from</em>. Overrides <code>SENDER_EMAIL</code> in <code>.env</code>. Its app password still comes from <code>SENDER_APP_PASSWORD</code> in <code>.env</code> — make sure they match.</div>
-                        <input type="email" id="sender-email" class="text-input" placeholder="e.g. you@gmail.com">
+                        <div class="help">Fixed to <code>SENDER_EMAIL</code> in <code>.env</code> — it has to match <code>SENDER_APP_PASSWORD</code>. Change it there, not here.</div>
+                        <input type="email" id="sender-email" class="text-input" readonly disabled placeholder="not set in .env">
                     </div>
                     <div class="field">
                         <label>Recipient Email (your inbox)</label>
