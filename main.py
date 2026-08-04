@@ -43,10 +43,9 @@ scheduler = AsyncIOScheduler(timezone=DAILY_EMAIL_TIMEZONE)
 async def startup():
     init_db()
 
-    # Schedule daily digest at configured hour IST. Sender can come from
-    # env (SENDER_EMAIL) or the active profile's outreach.sender_email.
-    profile_sender = (get_active_profile().get("outreach") or {}).get("sender_email") or ""
-    if SENDER_EMAIL or profile_sender:
+    # Schedule daily digest at configured hour IST. The sender is fixed to
+    # SENDER_EMAIL in .env — it has to match SENDER_APP_PASSWORD.
+    if SENDER_EMAIL:
         scheduler.add_job(
             run_daily_pipeline,
             CronTrigger(hour=DAILY_EMAIL_HOUR, minute=0),
@@ -57,7 +56,7 @@ async def startup():
         scheduler.start()
         print(f"Scheduled daily digest at {DAILY_EMAIL_HOUR}:00 IST", flush=True)
     else:
-        print("No sender email configured (env or profile) — daily digest disabled", flush=True)
+        print("SENDER_EMAIL not set in .env — daily digest disabled", flush=True)
 
 
 @app.on_event("shutdown")
@@ -464,15 +463,13 @@ async def api_email_status():
     import os
     logs = get_email_logs(limit=10)
     out_cfg = get_active_profile().get("outreach") or {}
-    profile_sender = (out_cfg.get("sender_email") or "").strip()
     profile_recipient = (out_cfg.get("recipient_email") or "").strip()
     env_recipient = os.getenv("RECIPIENT_EMAIL", "")
-    effective_sender = profile_sender or SENDER_EMAIL
     effective_recipient = profile_recipient or env_recipient
     return {
-        "sender_configured": bool(effective_sender) and bool(os.getenv("SENDER_APP_PASSWORD")),
-        "sender": effective_sender,
-        "sender_source": "profile" if profile_sender else ("env" if SENDER_EMAIL else "none"),
+        "sender_configured": bool(SENDER_EMAIL) and bool(os.getenv("SENDER_APP_PASSWORD")),
+        "sender": SENDER_EMAIL,
+        "sender_source": "env" if SENDER_EMAIL else "none",
         "recipient": effective_recipient,
         "recipient_source": "profile" if profile_recipient else ("env" if env_recipient else "none"),
         "candidate_name": out_cfg.get("candidate_name") or "",
@@ -690,17 +687,17 @@ async def api_rescore_all(
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
-    return templates.TemplateResponse("dashboard.html", {"request": request})
+    return templates.TemplateResponse(request, "dashboard.html")
 
 
 @app.get("/outreach", response_class=HTMLResponse)
 async def outreach_page(request: Request):
-    return templates.TemplateResponse("outreach.html", {"request": request})
+    return templates.TemplateResponse(request, "outreach.html")
 
 
 @app.get("/profile", response_class=HTMLResponse)
 async def profile_page(request: Request):
-    return templates.TemplateResponse("profile.html", {"request": request})
+    return templates.TemplateResponse(request, "profile.html")
 
 
 if __name__ == "__main__":

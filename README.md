@@ -60,7 +60,9 @@ A profile is one row in the `profiles` table (JSON config), with sections matchi
 
 ### Per-profile email settings
 
-Email digest fields live on the profile: `sender_email`, `recipient_email`, `email_greeting`, `email_digest_subject_role`. These **override** the corresponding `.env` values, so different profiles can send to different inboxes. The Gmail app password still comes from `SENDER_APP_PASSWORD` in `.env` — it must match whichever sender address the active profile uses.
+Email digest fields living on the profile: `recipient_email`, `email_greeting`, `email_digest_subject_role`. `recipient_email` **overrides** `RECIPIENT_EMAIL` in `.env`, so different profiles can send to different inboxes.
+
+The **sender address is fixed to `SENDER_EMAIL` in `.env`** and is not a profile setting — it has to match `SENDER_APP_PASSWORD`. The Profile page shows it read-only; change it in `.env`.
 
 ### Profile API (summary)
 

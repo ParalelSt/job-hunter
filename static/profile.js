@@ -46,6 +46,15 @@ async function boot() {
     }
     if (state.currentId != null) await selectProfile(state.currentId);
     renderSidebar();
+    loadEnvSender();
+}
+
+// Sender address is fixed in .env — show it read-only, never save it.
+async function loadEnvSender() {
+    try {
+        const s = await api('/email/status');
+        document.getElementById('sender-email').value = s.sender || '';
+    } catch {}
 }
 
 async function loadProfiles() {
@@ -124,7 +133,6 @@ function renderEditor() {
     document.getElementById('candidate-name').value = o.candidate_name || '';
     document.getElementById('email-role-word').value = o.email_digest_subject_role || '';
     document.getElementById('email-greeting').value = o.email_greeting || '';
-    document.getElementById('sender-email').value = o.sender_email || '';
     document.getElementById('recipient-email').value = o.recipient_email || '';
     document.getElementById('bio-short').value = o.bio_short || '';
     document.getElementById('achievements').value = (o.achievements || []).join('\n');
@@ -284,7 +292,6 @@ function buildConfigFromForm() {
     cfg.outreach.candidate_name = document.getElementById('candidate-name').value;
     cfg.outreach.email_digest_subject_role = document.getElementById('email-role-word').value;
     cfg.outreach.email_greeting = document.getElementById('email-greeting').value;
-    cfg.outreach.sender_email = document.getElementById('sender-email').value.trim();
     cfg.outreach.recipient_email = document.getElementById('recipient-email').value.trim();
     cfg.outreach.bio_short = document.getElementById('bio-short').value;
     cfg.outreach.achievements = document.getElementById('achievements').value
