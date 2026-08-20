@@ -59,7 +59,7 @@
 └────────────────────────────────────────────────────────────────┘
                               │
                               ▼
-                  parmanandprajapati0009@gmail.com
+                  recipient@example.com
 ```
 
 ---

@@ -1,0 +1,223 @@
+name: "AI Engineer (Remote, EU-friendly)"
+description: "Remote AI/ML/LLM engineering roles reachable from Europe (CET). Fill in outreach bio before sending DMs."
+schema_version: 1
+
+search:
+  default_terms:
+    - "applied ai engineer"
+    - "ai software engineer"
+    - "software engineer ai"
+    - "agentic ai engineer"
+    - "ai platform engineer"
+    - "ai application engineer"
+    - "genai engineer"
+    - "llm application engineer"
+  title_keywords_positive:
+    - "ai engineer"
+    - "ai"
+    - "applied ai"
+    - "agentic"
+    - "agents"
+    - "llm"
+    - "rag"
+    - "genai"
+    - "generative"
+    - "ai platform"
+    - "ai applications"
+    - "artificial intelligence"
+    - "ai/ml"
+    - "founding engineer"
+    - "software engineer"
+  title_keywords_negative:
+    - "intern"
+    - "internship"
+    - "trainee"
+    - "sales"
+    - "marketing"
+    - "recruiter"
+    - "phd required"
+    - "research scientist"
+    - "principal"
+    - "staff"
+    - "director"
+    - "manager"
+    - "lead"
+    - "architect"
+    - "senior"
+    - "sr."
+    - "security clearance"
+    - "ts/sci"
+    - "polygraph"
+  relevant_tech:
+    - "python"
+    - "langchain"
+    - "langgraph"
+    - "llamaindex"
+    - "autogen"
+    - "crewai"
+    - "mcp"
+    - "ollama"
+    - "langsmith"
+    - "langfuse"
+    - "hugging face"
+    - "huggingface"
+    - "transformers"
+    - "openai"
+    - "anthropic"
+    - "claude"
+    - "gpt"
+    - "rag"
+    - "embeddings"
+    - "vector"
+    - "pinecone"
+    - "weaviate"
+    - "qdrant"
+    - "fastapi"
+    - "pytorch"
+    - "tensorflow"
+    - "docker"
+    - "kubernetes"
+    - "aws"
+    - "gcp"
+    - "azure"
+    - "sql"
+    - "typescript"
+    - "react"
+    - "node"
+  jsearch_default_queries:
+    - { query: "applied ai engineer", country: "US", date_posted: "week", remote_jobs_only: true }
+    - { query: "ai software engineer", country: "US", date_posted: "week", remote_jobs_only: true }
+    - { query: "agentic ai engineer", country: "US", date_posted: "week", remote_jobs_only: true }
+    - { query: "ai engineer", country: "US", date_posted: "week", remote_jobs_only: true }
+    - { query: "ai engineer", country: "DE", date_posted: "week", remote_jobs_only: true }
+
+scoring:
+  experience_target: "any"
+  min_relevance_score: 50
+  min_score_to_store: 25
+  weights: { title: 35, tech: 35, experience: 15, signal: 15 }
+  core_tech:
+    - "python"
+    - "typescript"
+    - "langchain"
+    - "llm"
+    - "rag"
+  backend_signals:
+    - "llm"
+    - "rag"
+    - "fine-tuning"
+    - "finetuning"
+    - "prompt"
+    - "agent"
+    - "agentic"
+    - "inference"
+    - "embedding"
+    - "vector database"
+    - "model deployment"
+    - "ml pipeline"
+    - "generative"
+    - "chatbot"
+    - "ai product"
+
+location:
+  location_positive:
+    - "croatia"
+    - "zagreb"
+    - "europe"
+    - "european"
+    - "eu remote"
+    - "eu only"
+    - "europe only"
+    - "emea"
+    - "cet"
+    - "cest"
+    - "balkans"
+    - "worldwide"
+    - "global"
+    - "anywhere"
+    - "remote - global"
+    - "remote global"
+    - "globally distributed"
+    - "work from anywhere"
+    - "location independent"
+    - "remote - europe"
+  location_negative:
+    - "us only"
+    - "usa only"
+    - "us-only"
+    - "united states only"
+    - "us-based"
+    - "us based"
+    - "u.s. only"
+    - "us citizen"
+    - "us work authorization"
+    - "canada only"
+    - "uk only"
+    - "uk-based"
+    - "americas only"
+    - "north america only"
+    - "latam only"
+    - "apac only"
+    - "asia only"
+    - "india only"
+    - "hybrid work"
+    - "hybrid role"
+    - "hybrid model"
+    - "hybrid schedule"
+    - "days in office"
+    - "days per week in office"
+    - "in-office"
+    - "on-site required"
+    - "onsite required"
+    - "must be located"
+  timezone_compatible:
+    - "cet"
+    - "cest"
+    - "utc"
+    - "gmt"
+    - "eet"
+    - "european time"
+    - "flexible"
+    - "async"
+    - "asynchronous"
+    - "overlap"
+    - "any timezone"
+    - "all timezones"
+  timezone_incompatible:
+    - "pst only"
+    - "est only"
+    - "cst only"
+    - "pacific time only"
+    - "us timezone required"
+    - "us hours required"
+    - "core hours pst"
+
+outreach:
+  candidate_name: "[Your Name]"
+  candidate_core_tech: ["python", "langchain", "rag", "llm apps"]
+  candidate_extra_tech: ["fastapi", "react", "typescript", "docker"]
+  linkedin_search_titles:
+    - { title: "Engineering Manager", label: "Eng Manager", category: "engineering" }
+    - { title: "Head of AI", label: "Head of AI", category: "engineering" }
+    - { title: "CTO", label: "CTO", category: "executive" }
+    - { title: "CEO Founder", label: "CEO / Founder", category: "executive" }
+    - { title: "Technical Recruiter", label: "Tech Recruiter", category: "hr" }
+  bio_short: "an engineer building {stack} AI products"
+  achievements:
+    - "[Achievement 1 — your strongest AI/LLM project with concrete numbers]"
+    - "[Achievement 2 — a shipped product or production system]"
+    - "[Achievement 3 — anything showing end-to-end ownership]"
+  dm_short_template: "{greeting}, I noticed {company} is hiring for {title}. I'm {bio_short}. Would love to connect."
+  dm_long_template: |
+    {greeting},
+
+    Noticed {company} is hiring for {title}. The stack caught my eye — I've been building {stack} AI products.
+
+    {achievements}
+
+    Open to a 15-min chat to see if there's a fit?
+
+    Thanks,
+    {candidate_name}
+  email_digest_subject_role: "AI"
+  email_greeting: "Your Daily Job Digest"

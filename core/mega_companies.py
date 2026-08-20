@@ -245,7 +245,7 @@ GLOBAL_REMOTE = [
 
 
 def get_all_mega_companies() -> list[dict]:
-    """Return all companies with india_friendly and id set."""
+    """Return all companies with location_friendly and id set."""
     from core.models import Company
     result = []
     seen = set()
@@ -271,7 +271,7 @@ def get_all_mega_companies() -> list[dict]:
                 "founded_year": c.get("founded_year", 0),
                 "employee_count": c.get("employee_count", ""),
                 "tags": c.get("tags", ""),
-                "india_friendly": c.get("india_friendly", default_india),
+                "location_friendly": c.get("location_friendly", default_india),
                 "last_crawled": "",
                 "crawl_status": "paused",  # paused until ATS detected
                 "notes": category,

@@ -1,3 +1,4 @@
+import asyncio
 import uvicorn
 from fastapi import FastAPI, Query, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -28,7 +29,8 @@ from core.profile import (
 )
 from config.settings import (
     HOST, PORT, GOOGLE_SHEETS_CREDS, GOOGLE_SHEET_ID, HUNTER_API_KEY,
-    DAILY_EMAIL_HOUR, DAILY_EMAIL_TIMEZONE, SENDER_EMAIL,
+    DAILY_EMAIL_HOUR, DAILY_EMAIL_HOURS, DAILY_EMAIL_TIMEZONE, SENDER_EMAIL,
+    COLLECT_ON_STARTUP, STARTUP_COLLECT_MIN_GAP_HOURS,
 )
 
 app = FastAPI(title="Job Scraper", version="2.0.0")
@@ -46,17 +48,62 @@ async def startup():
     # Schedule daily digest at configured hour IST. The sender is fixed to
     # SENDER_EMAIL in .env — it has to match SENDER_APP_PASSWORD.
     if SENDER_EMAIL:
+        pipeline_hour, *digest_hours = DAILY_EMAIL_HOURS
         scheduler.add_job(
             run_daily_pipeline,
-            CronTrigger(hour=DAILY_EMAIL_HOUR, minute=0),
+            CronTrigger(hour=pipeline_hour, minute=0),
             id="daily_digest",
             replace_existing=True,
             kwargs={"send": True},
         )
+        if digest_hours:
+            scheduler.add_job(
+                send_daily_digest,
+                CronTrigger(hour=",".join(str(h) for h in digest_hours), minute=0),
+                id="digest_resend",
+                replace_existing=True,
+            )
         scheduler.start()
-        print(f"Scheduled daily digest at {DAILY_EMAIL_HOUR}:00 IST", flush=True)
+        extra = f", digest-only re-sends at {digest_hours}" if digest_hours else ""
+        print(
+            f"Scheduled full pipeline at {pipeline_hour}:00{extra} ({DAILY_EMAIL_TIMEZONE})",
+            flush=True,
+        )
     else:
         print("SENDER_EMAIL not set in .env — daily digest disabled", flush=True)
+
+    if COLLECT_ON_STARTUP:
+        asyncio.create_task(_startup_collect())
+
+
+async def _startup_collect():
+    """Collect on boot when the last collection is stale, so launching the
+    app refreshes the feed without the machine having to stay on all day."""
+    from datetime import datetime
+    from core.database import get_last_collect_at
+    from core.collector import startup_collect_due
+
+    await asyncio.sleep(3)  # let the server finish booting first
+    last = get_last_collect_at()
+    if not startup_collect_due(last, datetime.utcnow(), STARTUP_COLLECT_MIN_GAP_HOURS):
+        print(
+            f"Startup collect skipped — last collection ({last}) is fresher "
+            f"than {STARTUP_COLLECT_MIN_GAP_HOURS:g}h",
+            flush=True,
+        )
+        return
+    print("Startup collect: last collection stale or missing — collecting now…", flush=True)
+    cutoff = datetime.utcnow().isoformat()
+    try:
+        stats = await run_collection()
+        generated = generate_outreach_for_top_jobs(seen_after=cutoff)
+        print(
+            f"Startup collect done: {stats.get('new', 0)} new jobs, "
+            f"{generated} outreach entries",
+            flush=True,
+        )
+    except Exception as e:
+        print(f"Startup collect failed: {e}", flush=True)
 
 
 @app.on_event("shutdown")
@@ -75,7 +122,7 @@ async def api_get_jobs(
     search: Optional[str] = None,
     location: Optional[str] = None,
     tech: Optional[str] = None,
-    india_friendly: Optional[str] = None,
+    location_friendly: Optional[str] = None,
     company_domain: Optional[str] = None,
     limit: int = Query(50, ge=1, le=500),
     offset: int = Query(0, ge=0),
@@ -83,7 +130,7 @@ async def api_get_jobs(
     jobs = get_jobs(
         source=source, status=status, min_score=min_score,
         search=search, location=location, tech=tech,
-        india_friendly=india_friendly, company_domain=company_domain,
+        location_friendly=location_friendly, company_domain=company_domain,
         limit=limit, offset=offset,
     )
     return {"jobs": jobs, "count": len(jobs)}
@@ -113,16 +160,30 @@ async def api_sources():
     return {"sources": get_sources()}
 
 
+# "/api/collect" kept as an alias, but ad blockers block URLs ending in
+# "/collect" (analytics-tracker pattern), so the UI uses /api/run-collection.
+@app.post("/api/run-collection")
 @app.post("/api/collect")
 async def api_collect(generate_outreach: bool = Query(True)):
+    import time
+    import traceback
     from datetime import datetime
     cutoff = datetime.utcnow().isoformat()
-    stats = await run_collection()
-    if generate_outreach:
-        # Only pick from jobs seen in this collection run — avoids re-using
-        # stale 3-year-old python listings still sitting in the DB.
-        stats["outreach_generated"] = generate_outreach_for_top_jobs(seen_after=cutoff)
-    return stats
+    start = time.monotonic()
+    print(f"[collect] request received {cutoff} (generate_outreach={generate_outreach})", flush=True)
+    try:
+        stats = await run_collection()
+        if generate_outreach:
+            # Only pick from jobs seen in this collection run — avoids re-using
+            # stale 3-year-old python listings still sitting in the DB.
+            print("[collect] generating outreach…", flush=True)
+            stats["outreach_generated"] = generate_outreach_for_top_jobs(seen_after=cutoff)
+        print(f"[collect] completed in {time.monotonic() - start:.1f}s: {stats}", flush=True)
+        return stats
+    except Exception as e:
+        print(f"[collect] FAILED after {time.monotonic() - start:.1f}s:", flush=True)
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"collect failed: {type(e).__name__}: {e}")
 
 
 # ── Companies API ──────────────────────────────────────────────
@@ -131,14 +192,14 @@ async def api_collect(generate_outreach: bool = Query(True)):
 async def api_get_companies(
     ats_platform: Optional[str] = None,
     crawl_status: Optional[str] = None,
-    india_friendly: Optional[str] = None,
+    location_friendly: Optional[str] = None,
     search: Optional[str] = None,
     limit: int = Query(200, ge=1, le=500),
     offset: int = Query(0, ge=0),
 ):
     companies = get_companies(
         ats_platform=ats_platform, crawl_status=crawl_status,
-        india_friendly=india_friendly, search=search,
+        location_friendly=location_friendly, search=search,
         limit=limit, offset=offset,
     )
     return {"companies": companies, "count": len(companies)}
@@ -153,7 +214,7 @@ class CompanyInput(BaseModel):
     founded_year: int = 0
     employee_count: str = ""
     tags: str = ""
-    india_friendly: str = "unknown"
+    location_friendly: str = "unknown"
     notes: str = ""
 
 
@@ -261,7 +322,7 @@ async def api_discover_companies(
 @app.post("/api/export/sheets")
 async def api_export_sheets(
     min_score: int = Query(0, ge=0, le=100),
-    india_friendly: Optional[str] = None,
+    location_friendly: Optional[str] = None,
     source: Optional[str] = None,
     search: Optional[str] = None,
     tech: Optional[str] = None,
@@ -278,7 +339,7 @@ async def api_export_sheets(
     try:
         result = export_to_sheet(
             creds_file=creds, spreadsheet_id=sheet_id, sheet_name=sheet_name,
-            min_score=min_score, india_friendly=india_friendly,
+            min_score=min_score, location_friendly=location_friendly,
             source=source, search=search, tech=tech, mode=mode,
         )
         return result
@@ -352,12 +413,12 @@ async def api_outreach_refresh(limit: int = Query(15, ge=1, le=50),
 async def api_generate_outreach(
     min_score: int = Query(40, ge=0, le=100),
     limit: int = Query(15, ge=1, le=50),
-    india_friendly: Optional[str] = "maybe",
+    location_friendly: Optional[str] = "maybe",
 ):
     """For top N high-scoring jobs without existing outreach,
     build LinkedIn search URLs + generate DMs. No API credits used."""
     generated = generate_outreach_for_top_jobs(
-        limit=limit, min_score=min_score, india_friendly=india_friendly,
+        limit=limit, min_score=min_score, location_friendly=location_friendly,
     )
     if generated == 0:
         return {"generated": 0, "message": "No new jobs eligible for outreach"}
@@ -386,7 +447,7 @@ async def api_get_queries():
 
 class QueryInput(BaseModel):
     query: str
-    country: str = "IN"
+    country: str = "US"
     date_posted: str = "3days"
     remote_jobs_only: bool = False
 
@@ -473,7 +534,8 @@ async def api_email_status():
         "recipient": effective_recipient,
         "recipient_source": "profile" if profile_recipient else ("env" if env_recipient else "none"),
         "candidate_name": out_cfg.get("candidate_name") or "",
-        "scheduled_hour": DAILY_EMAIL_HOUR,
+        "scheduled_hour": DAILY_EMAIL_HOURS[0],
+        "scheduled_hours": DAILY_EMAIL_HOURS,
         "timezone": DAILY_EMAIL_TIMEZONE,
         "recent_sends": logs,
     }
@@ -669,10 +731,10 @@ async def api_rescore_all(
 
             conn.execute(
                 "UPDATE jobs SET relevance_score = ?, experience_level = ?, "
-                "india_friendly = ?, location_note = ?, tech_stack = ?, "
+                "location_friendly = ?, location_note = ?, tech_stack = ?, "
                 "scored_profile_id = ? WHERE id = ?",
                 (result["score"], result["experience_level"],
-                 result["india_friendly"], result["location_note"],
+                 result["location_friendly"], result["location_note"],
                  tech_stack, profile_id, r["id"]),
             )
             updated += 1

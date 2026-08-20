@@ -33,6 +33,7 @@ body {
     justify-content: space-between;
 }
 .header h1 { font-size: 20px; font-weight: 600; }
+.logo-link { text-decoration: none; color: inherit; cursor: pointer; }
 .header-actions { display: flex; gap: 12px; align-items: center; }
 
 /* ── Nav Tabs ── */
@@ -216,11 +217,11 @@ body {
 .status-applied { background: rgba(0,184,148,0.15); color: var(--green); }
 .status-stale { background: rgba(225,112,85,0.15); color: var(--red); }
 
-/* India-friendly badges */
-.india-yes { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid var(--green); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-.india-maybe { background: rgba(253,203,110,0.15); color: var(--yellow); border: 1px solid var(--yellow); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-.india-no { background: rgba(225,112,85,0.15); color: var(--red); border: 1px solid var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
-.india-unknown { background: rgba(139,143,163,0.15); color: var(--text-muted); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+/* Location-match badges */
+.location-yes { background: rgba(0,184,148,0.15); color: var(--green); border: 1px solid var(--green); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.location-maybe { background: rgba(253,203,110,0.15); color: var(--yellow); border: 1px solid var(--yellow); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.location-no { background: rgba(225,112,85,0.15); color: var(--red); border: 1px solid var(--red); padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.location-unknown { background: rgba(139,143,163,0.15); color: var(--text-muted); border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; font-size: 11px; }
 .location-note { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* ── Modal ── */

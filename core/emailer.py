@@ -49,7 +49,7 @@ def _render_card(i: int, item: dict) -> str:
     posted = _format_date(item.get("posted_date", ""))
     tech = _escape((item.get("tech_stack") or "")[:100])
     score = item.get("relevance_score", 0)
-    india = item.get("india_friendly", "unknown")
+    india = item.get("location_friendly", "unknown")
 
     job_url = item.get("job_url") or "#"
     dm_short = _escape(item.get("dm_short", ""))
@@ -275,7 +275,7 @@ def send_daily_digest(limit: int = None, dry_run: bool = False) -> dict:
 
 
 def generate_outreach_for_top_jobs(limit: int = 15, min_score: int = 40,
-                                   india_friendly: str = "maybe",
+                                   location_friendly: str = "maybe",
                                    seen_after: Optional[str] = None) -> int:
     """Create outreach items for the highest-scoring jobs that don't have one yet.
     If `seen_after` is given, only jobs refreshed at/after that timestamp qualify —
@@ -292,7 +292,7 @@ def generate_outreach_for_top_jobs(limit: int = 15, min_score: int = 40,
     profile = get_active_profile()
     profile_id = profile.get("_id")
 
-    top_jobs = get_jobs(min_score=min_score, india_friendly=india_friendly,
+    top_jobs = get_jobs(min_score=min_score, location_friendly=location_friendly,
                          seen_after=seen_after, limit=limit * 5)
     candidates = [j for j in top_jobs if not outreach_exists_for_job(j["id"])][:limit]
 

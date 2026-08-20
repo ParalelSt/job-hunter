@@ -6,13 +6,13 @@ How to adapt the system for different candidates, roles, or markets.
 
 ## Change the Candidate Profile
 
-The DM templates currently reference Parmanand's specific experience. To customize:
+The DM templates ship with placeholder experience. To customize:
 
 ### Edit `core/hunter.py` → `generate_dm_template()`
 
 Replace these hardcoded details:
 - **"healthcare SaaS serving 5,000+ users with sub-200ms APIs"**
-- **"DoctusTech"**
+- **The placeholder company/achievements**
 - **"multitenant SaaS + Stripe integrations"**
 
 Example for a different candidate (say, an ML engineer):
@@ -30,15 +30,15 @@ long = (
 ### Update the candidate name
 In `core/hunter.py`:
 ```python
-def generate_dm_template(job: dict, contact: dict = None, candidate_name: str = "Parmanand") -> dict:
+def generate_dm_template(job: dict, contact: dict = None, candidate_name: str = "[Your Name]") -> dict:
 ```
 
-Change `"Parmanand"` to the actual first name. It's passed to the long DM's signature.
+Change the placeholder to the actual first name. It's passed to the long DM's signature.
 
 ### Update the email greeting
 In `core/emailer.py` → `build_email_html()`:
 ```python
-def build_email_html(items: list[dict], candidate_name: str = "Parmanand") -> str:
+def build_email_html(items: list[dict], candidate_name: str = "[Your Name]") -> str:
 ```
 
 ---
@@ -132,9 +132,9 @@ LOCATION_NEGATIVE = [
 Also update JSearch queries via UI to use `country=US`.
 
 ### Remove India filter entirely
-In `core/scorer.py`, set `check_india_friendly()` to always return "yes".
+In `core/scorer.py`, set `check_location_friendly()` to always return "yes".
 
-Or in API calls, don't pass `india_friendly` filter.
+Or in API calls, don't pass `location_friendly` filter.
 
 ---
 
@@ -314,7 +314,7 @@ short = (
 
 Use the Google Sheets export endpoint:
 ```
-POST /api/export/sheets?min_score=50&india_friendly=yes
+POST /api/export/sheets?min_score=50&location_friendly=yes
 ```
 
 Then in n8n:

@@ -27,7 +27,7 @@ Shows counts for:
 | Source | greenhouse:stripe, jsearch, remotive, etc. |
 | Status | new / reviewed / applied / stale |
 | Min Score | 30+ / 50+ / 60+ / 70+ |
-| India Remote | India Friendly / India + Maybe / Not India |
+| Location Match | Location Match / Match + Maybe / No Match |
 | Location | Free text (Bangalore, Remote, etc.) |
 | Tech | Filter by tech stack keyword (python, django) |
 
@@ -159,7 +159,7 @@ Sent automatically at **9:00 AM IST** every day.
 │        Your Daily Job Digest                │
 │   April 15, 2026 · 15 opportunities         │
 │                                             │
-│   Hey Parmanand 👋                          │
+│   Hey [Your Name] 👋                          │
 │   Here are 15 fresh backend roles...        │
 ├─────────────────────────────────────────────┤
 │  #1                          [Score 72][IN]│

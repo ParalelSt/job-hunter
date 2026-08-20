@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Job Scraper Dashboard</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 <body>
     <!-- Header -->
     <div class="header">
         <div style="display:flex;align-items:center;gap:24px;">
-            <h1>Job Scraper</h1>
+            <a href="/" class="logo-link"><h1>Job Scraper</h1></a>
             <nav class="nav-tabs">
                 <a href="/" class="nav-tab active">Jobs</a>
                 <a href="/outreach" class="nav-tab">Outreach</a>
@@ -67,12 +67,12 @@
             </select>
         </div>
         <div class="filter-group">
-            <label>India Remote</label>
-            <select id="filter-india" onchange="applyFilters()">
+            <label>Location Match</label>
+            <select id="filter-location" onchange="applyFilters()">
                 <option value="">All</option>
-                <option value="yes">India Friendly</option>
-                <option value="maybe">India + Maybe</option>
-                <option value="no">Not India</option>
+                <option value="yes">Location Match</option>
+                <option value="maybe">Match + Maybe</option>
+                <option value="no">No Match</option>
             </select>
         </div>
         <div class="filter-group">
@@ -188,11 +188,11 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label>India Remote</label>
-                    <select id="export-india" style="width:100%;">
+                    <label>Location Match</label>
+                    <select id="export-location" style="width:100%;">
                         <option value="">All</option>
-                        <option value="yes">India Friendly Only</option>
-                        <option value="maybe">India + Maybe</option>
+                        <option value="yes">Location Match Only</option>
+                        <option value="maybe">Match + Maybe</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -211,6 +211,6 @@
         </div>
     </div>
 
-    <script src="/static/app.js?v=6"></script>
+    <script src="/static/app.js?v=8"></script>
 </body>
 </html>

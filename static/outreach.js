@@ -213,7 +213,7 @@ async function syncOutreach() {
     const original = btn.innerHTML;
     btn.textContent = 'Syncing…';
     try {
-        const data = await api('/outreach/generate?min_score=40&limit=15&india_friendly=maybe', { method: 'POST' });
+        const data = await api('/outreach/generate?min_score=40&limit=15&location_friendly=maybe', { method: 'POST' });
         if (data.error) {
             showToast(data.error);
         } else if (data.generated === 0) {

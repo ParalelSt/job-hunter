@@ -97,7 +97,7 @@ scoring:
     - "endpoint"
 
 location:
-  india_positive:
+  location_positive:
     - "india"
     - "asia"
     - "worldwide"
@@ -132,7 +132,7 @@ location:
     - "remote - india"
     - "ist"
     - "indian standard time"
-  india_negative:
+  location_negative:
     - "us only"
     - "usa only"
     - "us-only"
@@ -186,7 +186,7 @@ location:
     - "core hours est"
 
 outreach:
-  candidate_name: "Parmanand"
+  candidate_name: "[Your Name]"
   candidate_core_tech: ["python", "django", "fastapi", "drf"]
   candidate_extra_tech: ["postgresql", "redis", "aws", "docker", "microservices"]
   linkedin_search_titles:
@@ -199,10 +199,10 @@ outreach:
     - { title: "HR Manager", label: "HR Manager", category: "hr" }
   bio_short: "3+ years building {stack} backends"
   achievements:
-    - "Backend Developer at DoctusTech, a healthcare SaaS serving 5,000+ US medical professionals."
-    - "Architected the Django/DRF platform, integrated 3 microservices, cut API response times 50% with Redis caching."
-    - "Previously built multitenant SaaS + Stripe integrations processing 2,000+ monthly transactions."
-  dm_short_template: "{greeting}, I noticed {company} is hiring for {title}. I have {bio_short} — shipped a healthcare SaaS serving 5,000+ users with sub-200ms APIs. Would love to connect."
+    - "[Achievement 1 — most impressive project or role, with concrete numbers]"
+    - "[Achievement 2 — architecture or performance win]"
+    - "[Achievement 3 — anything that shows production experience]"
+  dm_short_template: "{greeting}, I noticed {company} is hiring for {title}. I have {bio_short}. Would love to connect."
   dm_long_template: |
     {greeting},
 

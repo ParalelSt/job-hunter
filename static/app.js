@@ -2,7 +2,7 @@ const state = {
     jobs: [],
     stats: {},
     sources: [],
-    filters: { source: '', status: '', min_score: 0, search: '', location: '', tech: '', india_friendly: '' },
+    filters: { source: '', status: '', min_score: 0, search: '', location: '', tech: '', location_friendly: '' },
     offset: 0,
     limit: 50,
     collecting: false,
@@ -10,7 +10,24 @@ const state = {
 
 // ── API ──
 async function api(path, opts = {}) {
-    const resp = await fetch(`/api${path}`, opts);
+    const t0 = performance.now();
+    const label = `${opts.method || 'GET'} /api${path}`;
+    console.log(`[api] → ${label}`);
+    let resp;
+    try {
+        resp = await fetch(`/api${path}`, opts);
+    } catch (e) {
+        const secs = ((performance.now() - t0) / 1000).toFixed(1);
+        console.error(`[api] ✗ ${label} died after ${secs}s — ${e.name}: ${e.message}`, e);
+        throw new Error(`${e.name} after ${secs}s (network layer — check the server terminal; if it shows the request completing, the browser dropped the connection)`);
+    }
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    console.log(`[api] ← ${resp.status} ${label} in ${secs}s`);
+    if (!resp.ok) {
+        const body = await resp.text();
+        console.error(`[api] ${label} HTTP ${resp.status} body:`, body);
+        throw new Error(`HTTP ${resp.status}: ${body.slice(0, 300)}`);
+    }
     return resp.json();
 }
 
@@ -23,7 +40,7 @@ async function loadJobs() {
     if (f.search) params.set('search', f.search);
     if (f.location) params.set('location', f.location);
     if (f.tech) params.set('tech', f.tech);
-    if (f.india_friendly) params.set('india_friendly', f.india_friendly);
+    if (f.location_friendly) params.set('location_friendly', f.location_friendly);
     params.set('limit', state.limit);
     params.set('offset', state.offset);
 
@@ -59,7 +76,7 @@ async function collectJobs() {
     const tick = setInterval(() => updateCollectLoader(startMs, estimateSec), 500);
 
     try {
-        const stats = await api('/collect', { method: 'POST' });
+        const stats = await api('/run-collection', { method: 'POST' });
         const newCount = stats.new ?? 0;
         const outCount = stats.outreach_generated ?? 0;
         showToast(`Collection complete — ${newCount} new jobs, ${outCount} outreach items ready to email`);
@@ -128,16 +145,16 @@ async function updateStatus(jobId, status) {
     await loadJobs();
 }
 
-// ── India badge helper ──
-function indiaBadge(value, note) {
+// ── Location badge helper ──
+function locationBadge(value, note) {
     const labels = {
-        yes: 'India OK',
-        maybe: 'Maybe India',
-        no: 'Not India',
+        yes: 'Location OK',
+        maybe: 'Maybe',
+        no: 'No Match',
         unknown: 'Unknown',
     };
     const label = labels[value] || labels.unknown;
-    const cls = `india-${value || 'unknown'}`;
+    const cls = `location-${value || 'unknown'}`;
     const tooltip = note ? ` title="${escapeHtml(note)}"` : '';
     return `<span class="${cls}"${tooltip}>${label}</span>`;
 }
@@ -145,7 +162,7 @@ function indiaBadge(value, note) {
 // ── Render ──
 function renderStats() {
     const s = state.stats;
-    const indiaStats = s.by_india || {};
+    const locationStats = s.by_location || {};
     document.getElementById('stats-bar').innerHTML = `
         <div class="stat-card">
             <div class="label">Total Jobs</div>
@@ -156,16 +173,16 @@ function renderStats() {
             <div class="value">${s.avg_score || 0}</div>
         </div>
         <div class="stat-card" style="border-color: var(--green);">
-            <div class="label">India Friendly</div>
-            <div class="value" style="color: var(--green);">${indiaStats['yes'] || 0}</div>
+            <div class="label">Location Match</div>
+            <div class="value" style="color: var(--green);">${locationStats['yes'] || 0}</div>
         </div>
         <div class="stat-card" style="border-color: var(--yellow);">
-            <div class="label">Maybe India</div>
-            <div class="value" style="color: var(--yellow);">${indiaStats['maybe'] || 0}</div>
+            <div class="label">Maybe</div>
+            <div class="value" style="color: var(--yellow);">${locationStats['maybe'] || 0}</div>
         </div>
         <div class="stat-card" style="border-color: var(--red);">
-            <div class="label">Not India</div>
-            <div class="value" style="color: var(--red);">${indiaStats['no'] || 0}</div>
+            <div class="label">No Match</div>
+            <div class="value" style="color: var(--red);">${locationStats['no'] || 0}</div>
         </div>
         ${Object.entries(s.by_source || {}).map(([src, count]) => `
             <div class="stat-card">
@@ -234,7 +251,7 @@ function renderJobs() {
                     <span>${escapeHtml(job.source)}</span>
                     ${job.salary ? `<span>${escapeHtml(job.salary)}</span>` : ''}
                     ${job.posted_date ? `<span>${formatDate(job.posted_date)}</span>` : ''}
-                    ${indiaBadge(job.india_friendly, job.location_note)}
+                    ${locationBadge(job.location_friendly, job.location_note)}
                     ${job.last_seen ? `<span style="font-size:11px;color:var(--text-muted);">Last seen: ${formatDate(job.last_seen)}</span>` : ''}
                 </div>
                 <div class="job-tags">
@@ -263,7 +280,7 @@ function openModal(jobId) {
                 ${job.relevance_score}
             </span>
             <span class="status-badge ${statusClass(job.status)}">${job.status}</span>
-            ${indiaBadge(job.india_friendly, job.location_note)}
+            ${locationBadge(job.location_friendly, job.location_note)}
             <span class="tag">${escapeHtml(job.source)}</span>
             ${job.salary ? `<span class="tag">${escapeHtml(job.salary)}</span>` : ''}
             ${job.experience_level ? `<span class="tag">${escapeHtml(job.experience_level)}</span>` : ''}
@@ -325,7 +342,7 @@ function applyFilters() {
     state.filters.search = document.getElementById('filter-search').value;
     state.filters.location = document.getElementById('filter-location').value;
     state.filters.tech = document.getElementById('filter-tech').value;
-    state.filters.india_friendly = document.getElementById('filter-india').value;
+    state.filters.location_friendly = document.getElementById('filter-location').value;
     state.offset = 0;
     loadJobs();
 }
@@ -337,8 +354,8 @@ function resetFilters() {
     document.getElementById('filter-search').value = '';
     document.getElementById('filter-location').value = '';
     document.getElementById('filter-tech').value = '';
-    document.getElementById('filter-india').value = '';
-    state.filters = { source: '', status: '', min_score: 0, search: '', location: '', tech: '', india_friendly: '' };
+    document.getElementById('filter-location').value = '';
+    state.filters = { source: '', status: '', min_score: 0, search: '', location: '', tech: '', location_friendly: '' };
     state.offset = 0;
     loadJobs();
 }
@@ -401,8 +418,8 @@ async function doExport() {
     params.set('sheet_name', document.getElementById('export-sheet-name').value);
     params.set('min_score', document.getElementById('export-score').value);
     params.set('mode', document.getElementById('export-mode').value);
-    const india = document.getElementById('export-india').value;
-    if (india) params.set('india_friendly', india);
+    const india = document.getElementById('export-location').value;
+    if (india) params.set('location_friendly', india);
 
     try {
         const data = await api(`/export/sheets?${params}`, { method: 'POST' });

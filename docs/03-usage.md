@@ -84,7 +84,7 @@ Expected results:
 
 ## Working Through a Job Card (Example)
 
-Scenario: **Senior Backend Engineer @ Razorpay** (Score: 72, India Friendly)
+Scenario: **Senior Backend Engineer @ Razorpay** (Score: 72, Location Match)
 
 ### Step 1: Read the job description
 Click the card → modal opens with full description. Quick scan:

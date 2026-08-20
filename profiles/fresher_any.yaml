@@ -102,7 +102,7 @@ scoring:
     - "entry level"
 
 location:
-  india_positive:
+  location_positive:
     - "india"
     - "asia"
     - "worldwide"
@@ -135,7 +135,7 @@ location:
     - "remote - india"
     - "ist"
     - "indian standard time"
-  india_negative:
+  location_negative:
     - "us only"
     - "usa only"
     - "us-only"

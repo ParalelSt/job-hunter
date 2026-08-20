@@ -99,7 +99,7 @@ scoring:
     - "hydration"
 
 location:
-  india_positive:
+  location_positive:
     - "india"
     - "asia"
     - "worldwide"
@@ -125,7 +125,7 @@ location:
     - "gurugram"
     - "remote - india"
     - "ist"
-  india_negative:
+  location_negative:
     - "us only"
     - "usa only"
     - "us-only"

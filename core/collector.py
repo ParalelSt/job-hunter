@@ -6,7 +6,7 @@ from datetime import datetime
 from core.models import Job
 from core.database import (
     insert_job, init_db, get_companies, update_company_crawl_status,
-    cleanup_old_jobs,
+    cleanup_old_jobs, set_last_collect_at,
 )
 from core.scorer import score_job
 from core.profile import get_active_profile
@@ -43,7 +43,7 @@ def _build_job_board_sources() -> list:
         queries = [
             {
                 "query": q["query"],
-                "country": q.get("country", "IN"),
+                "country": q.get("country", "US"),
                 "date_posted": q.get("date_posted", "3days"),
                 **({"remote_jobs_only": "true"} if q.get("remote_jobs_only") else {}),
             }
@@ -73,12 +73,14 @@ def _make_ats_source(company: dict):
 
 async def _fetch_from_source(source) -> list[Job]:
     """Fetch jobs from a single source with error handling."""
+    import time
+    start = time.monotonic()
     try:
         jobs = await source.fetch()
-        log(f"  [OK] {source.name}: {len(jobs)} jobs fetched")
+        log(f"  [OK] {source.name}: {len(jobs)} jobs fetched in {time.monotonic() - start:.1f}s")
         return jobs
     except Exception as e:
-        log(f"  [FAIL] {source.name}: {e}")
+        log(f"  [FAIL] {source.name} after {time.monotonic() - start:.1f}s: {type(e).__name__}: {e}")
         return []
 
 
@@ -99,7 +101,7 @@ def _score_and_store(jobs: list[Job], stats: dict, profile: dict = None):
 
         job.relevance_score = result["score"]
         job.experience_level = result["experience_level"]
-        job.india_friendly = result["india_friendly"]
+        job.location_friendly = result["location_friendly"]
         job.location_note = result["location_note"]
 
         existing_tech = set(t.strip() for t in job.tech_stack.split(",") if t.strip())
@@ -237,4 +239,17 @@ async def run_collection(include_companies: bool = True) -> dict:
     log(f"  Deleted (stale): {total['deleted_stale']}")
     log("Collection complete!")
     log("=" * 50)
+    set_last_collect_at(datetime.utcnow().isoformat())
     return total
+
+
+def startup_collect_due(last_iso, now: datetime, min_gap_hours: float) -> bool:
+    """True when a boot-time collection should run: no collection recorded
+    yet, an unparseable timestamp, or one older than min_gap_hours."""
+    if not last_iso:
+        return True
+    try:
+        last = datetime.fromisoformat(last_iso)
+    except ValueError:
+        return True
+    return (now - last).total_seconds() >= min_gap_hours * 3600

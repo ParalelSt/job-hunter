@@ -12,7 +12,25 @@ from core.database import log_api_call
 
 class JSearchSource(BaseSource):
     name = "jsearch"
-    BASE_URL = "https://jsearch.p.rapidapi.com/search"
+    # v2: the old /search endpoint was removed (404s). v2 nests results under
+    # data.jobs, ignores remote_jobs_only, and returns 0 results when the word
+    # "remote" appears in the query text — see _clean_params.
+    BASE_URL = "https://jsearch.p.rapidapi.com/search-v2"
+
+    @staticmethod
+    def _clean_params(q: dict) -> dict:
+        params = {k: v for k, v in q.items() if k != "remote_jobs_only"}
+        params["query"] = " ".join(
+            w for w in str(params.get("query", "")).split() if w.lower() != "remote"
+        )
+        return params
+
+    @staticmethod
+    def _extract_items(data: dict) -> list:
+        payload = data.get("data")
+        if isinstance(payload, dict):  # v2 shape
+            return payload.get("jobs") or []
+        return payload or []  # legacy v1 shape (list)
 
     def __init__(self, queries: list[dict] = None):
         # Queries are now sourced from the DB (search_queries table), which is
@@ -34,14 +52,28 @@ class JSearchSource(BaseSource):
         async with httpx.AsyncClient(timeout=60) as client:
             for q in self.queries:
                 try:
-                    params = {**q, "page": 1, "num_pages": 1, "employment_types": "FULLTIME"}
+                    params = {**self._clean_params(q), "page": 1, "num_pages": 1, "employment_types": "FULLTIME"}
                     resp = await client.get(self.BASE_URL, headers=headers, params=params)
                     success = resp.status_code == 200
                     log_api_call("jsearch", success=success, notes=q.get("query", ""))
                     if not success:
+                        print(
+                            f"  [jsearch] '{params['query']}' → HTTP {resp.status_code}: {resp.text[:150]}",
+                            flush=True,
+                        )
                         continue
                     data = resp.json()
-                    for item in data.get("data", []):
+                    items = self._extract_items(data)
+                    print(
+                        f"  [jsearch] '{params['query']}' ({params.get('country', '?')}) "
+                        f"→ HTTP {resp.status_code}, {len(items)} jobs",
+                        flush=True,
+                    )
+                    for item in items:
+                        # v2 ignores the remote_jobs_only param, so enforce it
+                        # client-side via the per-job remote flag.
+                        if q.get("remote_jobs_only") and not item.get("job_is_remote"):
+                            continue
                         job = self._map_job(item)
                         if job:
                             all_jobs.append(job)

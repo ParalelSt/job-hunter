@@ -27,8 +27,8 @@ Stores all collected job postings.
 | `company_domain` | TEXT | '' | e.g., `stripe.com` |
 | `salary` | TEXT | '' | Free text (format varies by source) |
 | `job_type` | TEXT | '' | full-time / contract / etc. |
-| `india_friendly` | TEXT | 'unknown' | yes / no / maybe / unknown |
-| `location_note` | TEXT | '' | Why we classified it as india_friendly |
+| `location_friendly` | TEXT | 'unknown' | yes / no / maybe / unknown |
+| `location_note` | TEXT | '' | Why we classified it as location_friendly |
 | `mark_for_email` | INTEGER | 0 | 1 = prioritize in daily digest |
 
 **Indexes:**
@@ -36,7 +36,7 @@ Stores all collected job postings.
 - `idx_source` on `source`
 - `idx_status` on `status`
 - `idx_discovered` on `discovered_at DESC`
-- `idx_india` on `india_friendly`
+- `idx_location` on `location_friendly`
 - `idx_company_domain` on `company_domain`
 
 ---
@@ -56,7 +56,7 @@ Stores all collected job postings.
 | `founded_year` | INTEGER | 0 | Year founded |
 | `employee_count` | TEXT | '' | e.g., `500+`, `1000+` |
 | `tags` | TEXT | '' | Comma-separated: `saas,fintech,india-hq` |
-| `india_friendly` | TEXT | 'unknown' | yes / no / maybe / unknown |
+| `location_friendly` | TEXT | 'unknown' | yes / no / maybe / unknown |
 | `last_crawled` | TEXT | '' | ISO date of last successful crawl |
 | `crawl_status` | TEXT | 'active' | active / paused / failed |
 | `notes` | TEXT | '' | Free text |

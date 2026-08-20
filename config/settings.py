@@ -17,11 +17,44 @@ RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
 # Email Settings (Gmail SMTP)
 SENDER_EMAIL = os.getenv("SENDER_EMAIL", "")
 SENDER_APP_PASSWORD = os.getenv("SENDER_APP_PASSWORD", "")
-RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "parmanandprajapati0009@gmail.com")
+RECIPIENT_EMAIL = os.getenv("RECIPIENT_EMAIL", "")
+
+# Personal identity — kept out of tracked files on purpose. Set these in .env
+# (gitignored); profiles with blank/placeholder fields fall back to them.
+CANDIDATE_NAME = os.getenv("CANDIDATE_NAME", "")
 
 # Daily digest scheduler
-DAILY_EMAIL_HOUR = int(os.getenv("DAILY_EMAIL_HOUR", "9"))   # IST hour
-DAILY_EMAIL_TIMEZONE = "Asia/Kolkata"
+def parse_email_hours(raw: str, fallback: int = 9) -> list[int]:
+    """Parse comma-separated send hours ("9,14,19") into a sorted, deduped list.
+
+    Invalid or out-of-range entries are dropped; if nothing valid remains,
+    returns [fallback] so the digest always has at least one send time.
+    """
+    hours: list[int] = []
+    for part in raw.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        try:
+            hour = int(part)
+        except ValueError:
+            continue
+        if 0 <= hour <= 23 and hour not in hours:
+            hours.append(hour)
+    return sorted(hours) or [fallback]
+
+
+DAILY_EMAIL_HOUR = int(os.getenv("DAILY_EMAIL_HOUR", "9"))
+# The first hour runs the full pipeline (collect + score + email);
+# remaining hours re-send a digest from jobs already in the database.
+DAILY_EMAIL_HOURS = parse_email_hours(os.getenv("DAILY_EMAIL_HOURS", ""), fallback=DAILY_EMAIL_HOUR)
+DAILY_EMAIL_TIMEZONE = os.getenv("DAILY_EMAIL_TIMEZONE", "UTC")
+
+# Collect on app startup (so a machine that isn't always on still gets a
+# fresh feed just by launching the app). Skipped when the last collection
+# is newer than STARTUP_COLLECT_MIN_GAP_HOURS, to protect JSearch credits.
+COLLECT_ON_STARTUP = os.getenv("COLLECT_ON_STARTUP", "true").strip().lower() in ("1", "true", "yes")
+STARTUP_COLLECT_MIN_GAP_HOURS = float(os.getenv("STARTUP_COLLECT_MIN_GAP_HOURS", "6"))
 DAILY_JOBS_COUNT = int(os.getenv("DAILY_JOBS_COUNT", "15"))  # how many jobs in email
 
 # Google Sheets
@@ -58,7 +91,7 @@ TITLE_KEYWORDS_NEGATIVE = [
     "intern", "internship", "trainee", "junior",
 ]
 
-# ── Location / India Remote Filtering ──
+# ── Location / Location Match Filtering ──
 
 # Keywords that CONFIRM India/Asia people can apply
 LOCATION_INDIA_POSITIVE = [

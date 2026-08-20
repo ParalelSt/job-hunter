@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile - Job Scraper</title>
-    <link rel="stylesheet" href="/static/style.css?v=5">
+    <link rel="stylesheet" href="/static/style.css?v=6">
     <link rel="stylesheet" href="/static/profile.css?v=1">
 </head>
 <body>
     <div class="header">
         <div style="display:flex;align-items:center;gap:24px;">
-            <h1>Job Scraper</h1>
+            <a href="/" class="logo-link"><h1>Job Scraper</h1></a>
             <nav class="nav-tabs">
                 <a href="/" class="nav-tab">Jobs</a>
                 <a href="/outreach" class="nav-tab">Outreach</a>
@@ -141,12 +141,12 @@
                 <div class="field">
                     <label>India-Positive Keywords</label>
                     <div class="help">Presence of these marks a job as India-friendly.</div>
-                    <div class="tag-editor" data-path="location.india_positive"></div>
+                    <div class="tag-editor" data-path="location.location_positive"></div>
                 </div>
                 <div class="field">
                     <label>India-Negative Keywords</label>
                     <div class="help">Presence of these <strong>excludes</strong> the job from India.</div>
-                    <div class="tag-editor" data-path="location.india_negative"></div>
+                    <div class="tag-editor" data-path="location.location_negative"></div>
                 </div>
                 <div class="field">
                     <label>Timezone-Compatible</label>

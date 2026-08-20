@@ -56,8 +56,8 @@ def default_config() -> dict:
             },
         },
         "location": {
-            "india_positive": [],
-            "india_negative": [],
+            "location_positive": [],
+            "location_negative": [],
             "timezone_compatible": [],
             "timezone_incompatible": [],
         },
@@ -92,6 +92,16 @@ def validate_config(config: dict) -> dict:
     Enforces enum for experience_target. Leaves lists/strings as-is otherwise."""
     base = default_config()
     merged = _deep_merge(base, config or {})
+
+    # Legacy profiles (pre-generalization) stored location keywords under
+    # india_positive/india_negative — carry them over.
+    loc = merged.get("location") or {}
+    for legacy, current in (("india_positive", "location_positive"),
+                            ("india_negative", "location_negative")):
+        if loc.get(legacy) and not loc.get(current):
+            loc[current] = list(loc[legacy])
+        loc.pop(legacy, None)
+    merged["location"] = loc
 
     target = merged["scoring"].get("experience_target", "mid")
     if target not in ("fresher", "junior", "mid", "senior", "any"):
@@ -137,6 +147,19 @@ def _cache_set(pid: int, name: str, config: dict) -> None:
 
 # ── Public API ────────────────────────────────────────────────────────
 
+def apply_env_identity(cfg: dict) -> dict:
+    """Fill personal fields from env (.env, gitignored) when the profile
+    leaves them blank or as a placeholder — keeps personal info out of
+    tracked files."""
+    from config import settings
+    out = dict(cfg.get("outreach") or {})
+    name = (out.get("candidate_name") or "").strip()
+    if settings.CANDIDATE_NAME and (not name or name == "[Your Name]"):
+        out["candidate_name"] = settings.CANDIDATE_NAME
+    cfg["outreach"] = out
+    return cfg
+
+
 def get_active_profile() -> dict:
     """Returns the full active profile config, cached. Always returns a
     valid dict (falls back to default_config() if no profile is set)."""
@@ -145,28 +168,28 @@ def get_active_profile() -> dict:
             cfg = dict(_ACTIVE_CACHE["config"])
             cfg["_id"] = _ACTIVE_CACHE["id"]
             cfg["_name"] = _ACTIVE_CACHE["name"]
-            return cfg
+            return apply_env_identity(cfg)
 
     pid = _read_active_profile_id()
     if pid is None:
         cfg = default_config()
         cfg["_id"] = None
         cfg["_name"] = "(none)"
-        return cfg
+        return apply_env_identity(cfg)
 
     row = _read_profile_row(pid)
     if not row:
         cfg = default_config()
         cfg["_id"] = None
         cfg["_name"] = "(none)"
-        return cfg
+        return apply_env_identity(cfg)
 
     config = validate_config(json.loads(row["config_json"]))
     _cache_set(row["id"], row["name"], config)
     out = dict(config)
     out["_id"] = row["id"]
     out["_name"] = row["name"]
-    return out
+    return apply_env_identity(out)
 
 
 def list_profiles() -> list[dict]:
@@ -423,14 +446,14 @@ def seed_search_queries_from_profile(pid: int, replace: bool = False) -> int:
 
     added = 0
     for q in queries:
-        key = (str(q.get("query", "")).strip().lower(), q.get("country", "IN"))
+        key = (str(q.get("query", "")).strip().lower(), q.get("country", "US"))
         if not key[0]:
             continue
         if key in existing_keys:
             continue
         add_search_query(
             query=q.get("query", ""),
-            country=q.get("country", "IN"),
+            country=q.get("country", "US"),
             date_posted=q.get("date_posted", "3days"),
             remote_jobs_only=bool(q.get("remote_jobs_only", False)),
         )
@@ -451,16 +474,16 @@ def _legacy_profile_from_settings() -> dict:
     cfg["search"]["title_keywords_negative"] = list(getattr(s, "TITLE_KEYWORDS_NEGATIVE", []))
     cfg["search"]["relevant_tech"] = list(getattr(s, "RELEVANT_TECH", []))
     cfg["search"]["jsearch_default_queries"] = [
-        {"query": "python django backend developer", "country": "IN", "date_posted": "3days", "remote_jobs_only": False},
-        {"query": "python backend engineer", "country": "IN", "date_posted": "3days", "remote_jobs_only": False},
-        {"query": "django developer", "country": "IN", "date_posted": "3days", "remote_jobs_only": False},
-        {"query": "fastapi developer", "country": "IN", "date_posted": "week", "remote_jobs_only": False},
-        {"query": "python backend remote", "country": "IN", "date_posted": "week", "remote_jobs_only": True},
+        {"query": "python django backend developer", "country": "US", "date_posted": "3days", "remote_jobs_only": False},
+        {"query": "python backend engineer", "country": "US", "date_posted": "3days", "remote_jobs_only": False},
+        {"query": "django developer", "country": "US", "date_posted": "3days", "remote_jobs_only": False},
+        {"query": "fastapi developer", "country": "US", "date_posted": "week", "remote_jobs_only": False},
+        {"query": "python backend remote", "country": "US", "date_posted": "week", "remote_jobs_only": True},
         {"query": "backend engineer python", "country": "US", "date_posted": "week", "remote_jobs_only": True},
     ]
 
-    cfg["location"]["india_positive"] = list(getattr(s, "LOCATION_INDIA_POSITIVE", []))
-    cfg["location"]["india_negative"] = list(getattr(s, "LOCATION_INDIA_NEGATIVE", []))
+    cfg["location"]["location_positive"] = list(getattr(s, "LOCATION_INDIA_POSITIVE", []))
+    cfg["location"]["location_negative"] = list(getattr(s, "LOCATION_INDIA_NEGATIVE", []))
     cfg["location"]["timezone_compatible"] = list(getattr(s, "TIMEZONE_COMPATIBLE", []))
     cfg["location"]["timezone_incompatible"] = list(getattr(s, "TIMEZONE_INCOMPATIBLE", []))
 
@@ -473,19 +496,18 @@ def _legacy_profile_from_settings() -> dict:
         "database", "rest", "graphql", "endpoint",
     ]
 
-    cfg["outreach"]["candidate_name"] = "Parmanand"
+    cfg["outreach"]["candidate_name"] = "[Your Name]"
     cfg["outreach"]["candidate_core_tech"] = ["python", "django", "fastapi", "drf"]
     cfg["outreach"]["candidate_extra_tech"] = ["postgresql", "redis", "aws", "docker", "microservices"]
     cfg["outreach"]["bio_short"] = "3+ years building {stack} backends"
     cfg["outreach"]["achievements"] = [
-        "Backend Developer at DoctusTech, a healthcare SaaS serving 5,000+ US medical professionals.",
-        "Architected the Django/DRF platform, integrated 3 microservices, cut API response times 50% with Redis caching.",
-        "Previously built multitenant SaaS + Stripe integrations processing 2,000+ monthly transactions.",
+        "[Achievement 1 — most impressive project or role, with concrete numbers]",
+        "[Achievement 2 — architecture or performance win]",
+        "[Achievement 3 — anything that shows production experience]",
     ]
     cfg["outreach"]["dm_short_template"] = (
         "{greeting}, I noticed {company} is hiring for {title}. "
-        "I have {bio_short} — shipped a healthcare SaaS serving 5,000+ users "
-        "with sub-200ms APIs. Would love to connect."
+        "I have {bio_short}. Would love to connect."
     )
     cfg["outreach"]["dm_long_template"] = (
         "{greeting},\n\n"
@@ -581,7 +603,7 @@ def get_active_profile_queries() -> list[dict]:
         out.append({
             "id": idx,
             "query": q.get("query", ""),
-            "country": q.get("country", "IN"),
+            "country": q.get("country", "US"),
             "date_posted": q.get("date_posted", "3days"),
             "remote_jobs_only": bool(q.get("remote_jobs_only", False)),
             "enabled": bool(q.get("enabled", True)),
@@ -589,7 +611,7 @@ def get_active_profile_queries() -> list[dict]:
     return out
 
 
-def add_active_profile_query(query: str, country: str = "IN",
+def add_active_profile_query(query: str, country: str = "US",
                              date_posted: str = "3days",
                              remote_jobs_only: bool = False) -> int:
     """Append a query to the active profile. Returns its new index.
