@@ -1,5 +1,7 @@
 # Job Scraper + Daily Outreach System
 
+> Forked from [replyre/job-hunter](https://github.com/replyre/job-hunter) — all credit for the original system to its author.
+
 An automated job discovery and cold outreach system built for software engineers. Finds fresh jobs daily, scores them against a **configurable role profile**, generates personalized LinkedIn outreach templates, and emails a curated list every morning.
 
 **Target user:** Any developer running a job search — comes with presets for **Backend Python (3+ YOE)**, **Frontend React**, and **Fresher**. Swap profiles to retarget the entire pipeline (search queries, scoring weights, outreach copy) without editing code.
@@ -209,6 +211,10 @@ Everything free or near-free:
 **Total: $0–$5/month**
 
 ---
+
+## Credits
+
+This is a fork of [replyre/job-hunter](https://github.com/replyre/job-hunter). The original architecture, pipeline, and UI were built by [@replyre](https://github.com/replyre); this fork generalizes it beyond the India job market (global location matching, multi-send digests, startup collection, JSearch v2).
 
 ## License / Usage
 
